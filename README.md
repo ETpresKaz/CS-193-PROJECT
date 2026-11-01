@@ -1,5 +1,8 @@
 Project Goal:
-I am planning to build a simple 2D spaceflight simulator that would allow a user to launch and navigate a spacecraft around a planet and its orbiting moon. The simulator would use newtonian physics to model gravity, velocity, acceleration, and thrust.
+I am planning to build a simple 2D spaceflight simulator that would allow a user to launch and navigate a spacecraft around a planet. The simulator would use newtonian physics to model gravity, velocity, acceleration, and thrust.
+
+MVP Scope:
+This is not a Kerbal Space Program recreation. This is a simple newtonian based physics sim. It will take inputs from a user, and calculate the orbit of a spacecraft around a body. the MVP will not have multiple bodies, have fuel, ship design, or more complcated orbital mechanics. There will be a simple 2D renderer of the planet and the orbiting ship.
 
 Tech Stack:
 - Java 25
