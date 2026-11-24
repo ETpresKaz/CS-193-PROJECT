@@ -1,3 +1,11 @@
+/**
+ * Gravity class
+ * Calculates the gravitational acceleration between two bodies in a 2D space.
+ * @author Ethan Kazenske
+ * @version 1.0
+ * @since 2026-11-23
+ */
+
 public class Gravity {
 
     private Gravity() {
