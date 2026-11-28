@@ -16,4 +16,8 @@ public class PhysicsEngine {
     public void update(Body body, Body ship, double dt) {
         this.integrator.step(body, ship, dt);
     }
+
+    public void update(Body body, Body ship, Vector2D thrust, double dt) {
+        this.integrator.step(body, ship, thrust, dt);
+    }
 }

@@ -33,7 +33,8 @@ public class Simulation {
         if (!running) {
             return;
         }
-        physicsEngine.update(earth, ship, timeStep);
+        Vector2D thrust = ship.getThrustAcceleration(earth);
+        physicsEngine.update(earth, ship, thrust, timeStep);
         simulationTime += timeStep;
     }
 

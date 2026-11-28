@@ -117,6 +117,39 @@ public class IntegratorTest {
         assertEquals(0.0, earth.getVelocity().getY());
     }
 
+    @Test
+    public void zeroThrustMatchesNoThrustTest() {
+        Body earth = createEarth();
+        Body shipA = createShip();
+        Body shipB = createShip();
+        integrator.step(earth, shipA, 1.0);
+        integrator.step(earth, shipB, new Vector2D(0, 0), 1.0);
+        assertEquals(shipA.getPosition().getX(), shipB.getPosition().getX());
+        assertEquals(shipA.getPosition().getY(), shipB.getPosition().getY());
+        assertEquals(shipA.getVelocity().getX(), shipB.getVelocity().getX());
+        assertEquals(shipA.getVelocity().getY(), shipB.getVelocity().getY());
+    }
+
+    @Test
+    public void thrustChangesVelocityTest() {
+        // after one step, thrust should add exactly thrust * dt to the velocity
+        Body earth = createEarth();
+        Body coastingShip = createShip();
+        Body burningShip = createShip();
+        Vector2D thrust = new Vector2D(0, 10);
+        integrator.step(earth, coastingShip, 1.0);
+        integrator.step(earth, burningShip, thrust, 1.0);
+        double extraSpeed = burningShip.getVelocity().getY() - coastingShip.getVelocity().getY();
+        assertEquals(10.0, extraSpeed, 1e-3);
+    }
+
+    @Test
+    public void nullThrustTest() {
+        Body earth = createEarth();
+        Body ship = createShip();
+        assertThrows(IllegalArgumentException.class, () -> integrator.step(earth, ship, null, 1.0));
+    }
+
     private Body createEarth() {
         return new Body("Earth", EARTH_MASS, new Vector2D(0, 0), new Vector2D(0, 0));
     }

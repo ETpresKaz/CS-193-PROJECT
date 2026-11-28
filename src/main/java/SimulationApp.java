@@ -3,11 +3,14 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * SimulationApp class
@@ -33,6 +36,7 @@ public class SimulationApp extends Application {
     private double timeWarp;
     private double timeAccumulator;
     private long lastFrameTime;
+    private final Set<KeyCode> heldKeys = new HashSet<>();
 
     @Override
     public void start(Stage stage) {
@@ -51,9 +55,12 @@ public class SimulationApp extends Application {
         timeAccumulator = 0.0;
         lastFrameTime = 0;
         scene.setOnKeyPressed(this::handleKeyPressed);
+        scene.setOnKeyReleased(this::handleKeyReleased);
+        stage.focusedProperty().addListener((observable, wasFocused, isFocused) -> heldKeys.clear());
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
+                updateBurnMode();
                 advanceSimulation(now);
                 renderer.render(simulation);
                 drawHud();
@@ -91,12 +98,40 @@ public class SimulationApp extends Application {
         }
     }
 
+    private void updateBurnMode() {
+        Spacecraft ship = simulation.getShip();
+        if (heldKeys.contains(KeyCode.W)) {
+            ship.setBurnMode(BurnMode.PROGRADE);
+        } else if (heldKeys.contains(KeyCode.S)) {
+            ship.setBurnMode(BurnMode.RETROGRADE);
+        } else if (heldKeys.contains(KeyCode.D)) {
+            ship.setBurnMode(BurnMode.RADIAL_OUT);
+        } else if (heldKeys.contains(KeyCode.A)) {
+            ship.setBurnMode(BurnMode.RADIAL_IN);
+        } else {
+            ship.setBurnMode(BurnMode.NONE);
+        }
+    }
+
     private void drawHud() {
+        Spacecraft ship = simulation.getShip();
+        CelestialBody earth = simulation.getEarth();
+        double distance = ship.getPosition().distanceTo(earth.getPosition());
+        double altitudeKm = (distance - earth.getRadius()) / 1000.0;
+        double speed = ship.getVelocity().magnitude();
+
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.WHITE);
         gc.setFont(Font.font("Monospaced", 16));
         gc.fillText("Time warp: " + (long) timeWarp + "x  (Up / Down to change)", 16, 28);
         gc.fillText("Elapsed:   " + formatTime(simulation.getSimulationTime()), 16, 50);
+        gc.fillText(String.format("Altitude:  %.1f km", altitudeKm), 16, 72);
+        gc.fillText(String.format("Speed:     %.1f m/s", speed), 16, 94);
+        gc.fillText("Burn:      " + ship.getBurnMode(), 16, 116);
+        gc.fillText("W/S prograde/retrograde  D/A radial out/in  Space pause", 16, 138);
+        if (!simulation.isRunning()) {
+            gc.fillText("PAUSED", 16, 160);
+        }
     }
 
     private String formatTime(double totalSeconds) {
@@ -107,8 +142,20 @@ public class SimulationApp extends Application {
         return String.format("%02d:%02d:%02d", hours, minutes, secs);
     }
 
+    private void handleKeyReleased(KeyEvent event) {
+        heldKeys.remove(event.getCode());
+    }
+
     private void handleKeyPressed(KeyEvent event) {
+        heldKeys.add(event.getCode());
         switch (event.getCode()) {
+            case SPACE:
+                if (simulation.isRunning()) {
+                    simulation.pause();
+                } else {
+                    simulation.start();
+                }
+                break;
             case UP:
                 timeWarp = Math.min(timeWarp * 2, MAX_TIME_WARP);
                 break;
