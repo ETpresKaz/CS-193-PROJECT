@@ -28,9 +28,8 @@ public class SimulationApp extends Application {
     private static final double MAX_TIME_WARP = 8192.0;
     private static final int MAX_STEPS_PER_FRAME = 5000;
     private static final double VIEW_RADII = 4.0;
-    private static final double ORBIT_ALTITUDE = 400_000;
-    private static final double SHIP_MASS = 1000;
     private Simulation simulation;
+    private String scenarioName;
     private Renderer renderer;
     private Canvas canvas;
     private double timeWarp;
@@ -49,10 +48,7 @@ public class SimulationApp extends Application {
         double halfView = Math.min(WINDOW_WIDTH, WINDOW_HEIGHT) / 2.0;
         double scale = halfView / (VIEW_RADII * Constants.EARTH_RADIUS);
         renderer = new Renderer(canvas, new Camera(scale, WINDOW_WIDTH, WINDOW_HEIGHT));
-        simulation = createCircularOrbit();
-        simulation.start();
-        timeWarp = MIN_TIME_WARP;
-        timeAccumulator = 0.0;
+        loadScenario(Scenarios.lowOrbit(TIME_STEP), "Low orbit");
         lastFrameTime = 0;
         scene.setOnKeyPressed(this::handleKeyPressed);
         scene.setOnKeyReleased(this::handleKeyReleased);
@@ -70,13 +66,12 @@ public class SimulationApp extends Application {
         stage.show();
     }
 
-    private Simulation createCircularOrbit() {
-        CelestialBody earth = new CelestialBody("Earth", Constants.EARTH_MASS,
-                new Vector2D(0, 0), new Vector2D(0, 0), Constants.EARTH_RADIUS);
-        double r = Constants.EARTH_RADIUS + ORBIT_ALTITUDE;
-        double speed = Math.sqrt(Constants.GRAVITATIONAL_CONSTANT * Constants.EARTH_MASS / r);
-        Spacecraft ship = new Spacecraft("Ship", SHIP_MASS, new Vector2D(r, 0), new Vector2D(0, speed));
-        return new Simulation(earth, ship, TIME_STEP);
+    private void loadScenario(Simulation newSimulation, String name) {
+        simulation = newSimulation;
+        scenarioName = name;
+        simulation.start();
+        timeWarp = MIN_TIME_WARP;
+        timeAccumulator = 0.0;
     }
 
     private void advanceSimulation(long now) {
@@ -128,9 +123,10 @@ public class SimulationApp extends Application {
         gc.fillText(String.format("Altitude:  %.1f km", altitudeKm), 16, 72);
         gc.fillText(String.format("Speed:     %.1f m/s", speed), 16, 94);
         gc.fillText("Burn:      " + ship.getBurnMode(), 16, 116);
-        gc.fillText("W/S prograde/retrograde  D/A radial out/in  Space pause", 16, 138);
+        gc.fillText("Scenario:  " + scenarioName, 16, 138);
+        gc.fillText("W/S prograde/retrograde  D/A radial out/in  Space pause  1/2/3 scenario", 16, 160);
         if (!simulation.isRunning()) {
-            gc.fillText("PAUSED", 16, 160);
+            gc.fillText("PAUSED", 16, 182);
         }
     }
 
@@ -155,6 +151,18 @@ public class SimulationApp extends Application {
                 } else {
                     simulation.start();
                 }
+                break;
+            case DIGIT1:
+            case NUMPAD1:
+                loadScenario(Scenarios.lowOrbit(TIME_STEP), "Low orbit");
+                break;
+            case DIGIT2:
+            case NUMPAD2:
+                loadScenario(Scenarios.ellipticalOrbit(TIME_STEP), "Elliptical orbit");
+                break;
+            case DIGIT3:
+            case NUMPAD3:
+                loadScenario(Scenarios.highOrbit(TIME_STEP), "High orbit");
                 break;
             case UP:
                 timeWarp = Math.min(timeWarp * 2, MAX_TIME_WARP);
